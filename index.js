@@ -20,9 +20,11 @@ module.exports = class s3proxy extends EventEmitter {
       throw new UserException('InvalidParameterList', 'bucket parameter is required');
     }
     this.bucket = p.bucket;
+    this.responseHeaders = p.responseHeaders;
     this.options =
         Object.getOwnPropertyNames(p)
           .filter(name => name !== 'bucket')
+	  .filter(name => name !== 'responseHeaders' )
           .reduce((obj, name) => {
             const withName = {};
             withName[name] = p[name];
@@ -48,6 +50,8 @@ module.exports = class s3proxy extends EventEmitter {
     });
     s3stream.addHeaderEventListener = (res) => {
       s3stream.on('httpHeaders', (statusCode, headers) => {
+	if ( this.responseHeaders )
+	  headers = this.responseHeaders( headers );
         res.writeHead(statusCode, headers);
       });
     };
